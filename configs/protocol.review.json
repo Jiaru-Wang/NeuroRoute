@@ -1,0 +1,188 @@
+{
+  "schema": "neuroroute_v1",
+  "approved": false,
+  "approval_note": "",
+  "review_notice": "候选方案供所有者审查；不是已确定的论文协议，不可直接启动训练。GDF实际通道名必须检查后填写。",
+  "split": "deterministic_7_1_1",
+  "device": "cuda",
+  "precision": "float32",
+  "channel_order": [
+    "Fz",
+    "FC3",
+    "FC1",
+    "FCz",
+    "FC2",
+    "FC4",
+    "C5",
+    "C3",
+    "C1",
+    "Cz",
+    "C2",
+    "C4",
+    "C6",
+    "CP3",
+    "CP1",
+    "CPz",
+    "CP2",
+    "CP4",
+    "P1",
+    "Pz",
+    "P2",
+    "POz"
+  ],
+  "regions": {
+    "front": [
+      "Fz",
+      "FC3",
+      "FC1",
+      "FCz",
+      "FC2",
+      "FC4"
+    ],
+    "left": [
+      "C5",
+      "C3",
+      "C1",
+      "CP3",
+      "CP1",
+      "P1"
+    ],
+    "mid": [
+      "Cz",
+      "CPz",
+      "Pz",
+      "POz"
+    ],
+    "right": [
+      "C2",
+      "C4",
+      "C6",
+      "CP2",
+      "CP4",
+      "P2"
+    ]
+  },
+  "region_notice": "这是本次提出的几何分组候选，非PDF已确定脑区、非生理功能定位；须审查后批准。",
+  "preprocessing": {
+    "artifact_policy": "drop",
+    "reference": "original",
+    "filter": "trial_butter_causal",
+    "filter_order": 5,
+    "low_hz": 0.3,
+    "high_hz": 40.0,
+    "resample": "fft",
+    "uv_divisor": 1.0,
+    "normalization": "train_channel_zscore",
+    "gdf_eeg_names": null,
+    "gdf_eog_names": null
+  },
+  "augmentation": {
+    "selection": "pdf_four_branch",
+    "branch_probabilities": [
+      0.25,
+      0.25,
+      0.25,
+      0.25
+    ],
+    "other_count_probabilities": [
+      0.5,
+      0.5
+    ]
+  },
+  "selection": {
+    "metric": "mean_condition_macro_f1",
+    "conditions": {
+      "complete": [],
+      "C3_only": [
+        "C3"
+      ],
+      "C4_only": [
+        "C4"
+      ]
+    }
+  },
+  "training": {
+    "batch_size": 16,
+    "max_epochs": 50,
+    "patience": 10,
+    "min_delta": 0.0,
+    "optimizer": "AdamW",
+    "lr": 0.0003,
+    "weight_decay": 0.01,
+    "balance_lambda": 0.01
+  },
+  "model": {
+    "activation": "gelu",
+    "ordinary_fusion": "residual_weighted_sum",
+    "eta": 0.5,
+    "shared_k": 2,
+    "vanilla_k": 3
+  },
+  "seeds": [
+    42,
+    123,
+    3407
+  ],
+  "final_test": {
+    "conditions": {
+      "complete": [],
+      "C3_only": [
+        "C3"
+      ],
+      "C4_only": [
+        "C4"
+      ],
+      "C3_C4": [
+        "C3",
+        "C4"
+      ],
+      "FC3_FC4": [
+        "FC3",
+        "FC4"
+      ],
+      "CP3_CP4": [
+        "CP3",
+        "CP4"
+      ]
+    },
+    "mechanisms": {
+      "approved": false,
+      "approval_note": "",
+      "interventions": [
+        "fixed_uniform",
+        "uniform_selected",
+        "reverse_selected_weights",
+        "cyclic_expert_ids",
+        "remove_shared",
+        "donor_route",
+        "donor_rank_weights"
+      ],
+      "donor_condition": "complete",
+      "expert_id_offset": 1,
+      "fixed_expert_ids": {
+        "vanilla_moe": [
+          0,
+          1,
+          2
+        ],
+        "mask_moe": [
+          0,
+          1,
+          2
+        ],
+        "shared_h": [
+          0,
+          1
+        ],
+        "shared_hm": [
+          0,
+          1
+        ],
+        "spatial_egs": [
+          0,
+          1
+        ]
+      }
+    }
+  }
+}

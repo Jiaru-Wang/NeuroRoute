@@ -140,7 +140,7 @@ checkpoint 保存必要的可训练模块、优化器、epoch、最优选择状�
 
 ## 11. 目录与实现顺序
 
-以可安装的 src/neuroroute 包组织 preprocessing、datasets、models/backbone、models/experts、models/router、models/baselines、losses、training、evaluation、analysis。configs、tests、scripts、docs、paper 按实际文件创建，避免堆空目录。
+以可安装的 src/neuroroute 包组织预处理、数据集、主干适配、专家、路由、公平对照、损失、训练、评价和分析。当前代码把紧密相关功能合并为 data.py、models.py、engine.py、experiments.py 等实际模块；官方源码隔离在 vendor/。准确位置以映射表为准。configs、tests、scripts、docs、paper 按实际文件创建，避免堆空目录。
 数据、权重、环境、运行产物保持本地且 gitignored。只提交配置模板，不提交服务器端点、用户目录、真实标签或身份输出。外部 CBraMod 用固定版本依赖或经许可证审核的源码快照；不得不加说明地复制。
 
 代码提交顺序：契约和测试设计 -> 数据/掩码/分区 -> 官方适配器 -> 线性基线 -> 共享训练验证引擎 -> 专家与路由 -> 公平对照 -> 分析统计与论文模板。

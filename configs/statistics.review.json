@@ -1,0 +1,37 @@
+{
+  "approved": false,
+  "approval_note": "",
+  "test": "exact_paired_sign_flip",
+  "metric": "macro_f1",
+  "condition": "C3_C4",
+  "bootstrap_replicates": 10000,
+  "confidence": 0.95,
+  "seed": 42,
+  "comparisons": [
+    [
+      "B0",
+      "B1"
+    ],
+    [
+      "B1",
+      "spatial_egs"
+    ],
+    [
+      "matched_mlp",
+      "spatial_egs"
+    ],
+    [
+      "mask_moe",
+      "spatial_egs"
+    ],
+    [
+      "shared_h",
+      "shared_hm"
+    ],
+    [
+      "shared_hm",
+      "spatial_egs"
+    ]
+  ],
+  "notice": "配对符号翻转检验、被试bootstrap及本比较族为待审方案；按9被试汇总3种子，不作为27独立样本。"
+}

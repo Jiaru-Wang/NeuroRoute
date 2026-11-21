@@ -1,0 +1,15 @@
+{
+  "repository": "https://github.com/wjq-learning/CBraMod",
+  "commit": "b9e961003214326972c567eff390e75b0287e32a",
+  "adaptation": "Only cbramod.py absolute import changed to a package-relative import; model math unchanged",
+  "files": {
+    "cbramod.py": {
+      "original_sha256": "caa7c5a0e4acd488a6f625b56f7b54dc4e7190d6b68ef5b76dff2cef86874a14",
+      "vendored_sha256": "e8193e557ee3ca3f422c17ae661fb8e4df671d9228c413ea092d879af1b8296b"
+    },
+    "criss_cross_transformer.py": {
+      "original_sha256": "90e90b8c98ca7eb543c44e32afc29674d3f71cb090692ad9f82db3a43edf334c",
+      "vendored_sha256": "90e90b8c98ca7eb543c44e32afc29674d3f71cb090692ad9f82db3a43edf334c"
+    }
+  }
+}
