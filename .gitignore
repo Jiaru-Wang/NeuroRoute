@@ -1,0 +1,40 @@
+# Credentials and machine-local files
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.DS_Store
+.vscode/
+.idea/
+# Python/runtime
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+*.egg-info/
+build/
+dist/
+# Data, weights and genuine run outputs must remain local
+data/raw/
+data/processed/
+data/cache/
+pretrained/
+checkpoints/
+results/
+logs/
+*.gdf
+*.mat
+*.npz
+*.npy
+*.pth
+*.pt
+*.safetensors
+*.ckpt
+# External repositories and personal runtime configuration
+third_party/CBraMod/
+configs/local*.json
+configs/local*.yaml
