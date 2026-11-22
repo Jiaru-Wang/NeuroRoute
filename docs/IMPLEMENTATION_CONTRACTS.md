@@ -6,6 +6,10 @@
 尚未批准的其余预处理项见 [FIR_DECISION.md](FIR_DECISION.md)。原因果路径保留为
 显式旧配置选项；不能混用两种配置的缓存或报告。
 
+后续获授权的筛选/重采样选择：artifact_policy=drop，仅依据官方 1023；
+resample=mne_fft_auto，固定 FFT/npad=auto/pad=edge，先得到 [22,800]，
+再 reshape 为 [22,4,200] 并转换 float32。排除记录不重编号，不丢标签身份。
+
 ## 数据和掩码：1.3、2.1、6.2、6.3
 
 B 为批量大小，C=22 为 EEG 电极数，T=4 为 patch 数，D=200 为 patch 长度和表征维数。

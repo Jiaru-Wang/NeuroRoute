@@ -15,10 +15,9 @@ CBraMod commit b9e961003214326972c567eff390e75b0287e32a 的
 长度和过渡带、reflect_limited 边界填充、单线程。先按连续段滤波再按 Cue
 裁剪；不按 Trial 重置滤波。逐通道独立处理，不混合通道。
 
-其余协议仍待审：伪迹保留/删除、重采样填充、幅值额外缩放、折内标准化、
-划分、增强、区域、预算、最终测试和统计。候选配置 `approved=false` 不变。
-特别是当前 `resample=fft` 仍为 SciPy 路径，不等价于六讲 MNE Epochs 的
-自动填充；本提交不把这一项视为已获批准。不要直接启动 prepare 或训练。
+初始滤波决策之外的协议未自动批准。后续伪迹与重采样决策见文末；幅值额外
+缩放、折内标准化、划分、增强、区域、预算、最终测试和统计仍待审。
+候选配置 `approved=false` 不变。不要直接启动 prepare 或训练。
 
 ## 边界与失败策略
 
@@ -69,3 +68,30 @@ FIR 沿这些间隙分段；manifest 保存间隙位置及原始窗口的端点�
 这不是扩大物理量程容差：未知数字码、错误长度/位置、部分通道缺失、非整数
 重建均拒绝。A04T 的间隙数量由真实 run 事件决定，不固定为 8。
 当前证据只覆盖 A01T；其余 session 必须实测后才能验收。
+
+## 后续真实验收与所有者委托决策
+
+服务器提交 a14c6209b915d0d0f7c3f24c42bea2c592a48a90 已对全部 18 个 session
+完成间隙解析和真实 CPU FIR 检查：5184 个窗口完整有限，A04T 7 个连续段，
+其余各 9 段，滤波长度均为 2751。报告 source_commit、原始 GDF/MAT 哈希、
+Trial 身份及滤波系数哈希均经用户运行的只读审计核对。
+此为用户提交的真实输出证据，不是本地再次执行；不代表 GPU 模型验收。
+
+在解释两项方案后，所有者回复“你决定”，授权助手选择：
+
+1. 所有模型/数据角色统一排除官方 1023 标记 Trial。当前全部 5184 个中
+   488 个被标记，候选缓存剩余 4696 个，每个 session 仍有四类。
+   不依据量化端点数量、模型表现或其他事后指标额外删样本。
+   全部 Trial 审计保留原始编号、标签、Cue、artifact、selected、exclusion_reason；
+   被排除者的原因明确为 official_1023。连续 FIR 仍先于筛选，邻近影响限制不变。
+2. 使用六讲 Epochs.resample 对应的 FFT/npad=auto 路径，250→200 Hz，
+   对每个 [22,1000] 窗口单独转换为 [22,800]，最后 reshape [22,4,200]。
+   配置名称 mne_fft_auto；MNE 1.13.2 参数明确为 method=fft、npad=auto、
+   window=auto（FFT 中为 boxcar）、pad=edge、n_jobs=1。
+   Epochs.resample 的 pad 默认是 edge，而 filter.resample 的 auto 会采用
+   reflect_limited，不能直接混用。新增测试直接与 EpochsArray.resample 比较。
+
+参考 https://github.com/mne-tools/mne-python/blob/v1.13.2/mne/filter.py
+旧 SciPy fft/polyphase 路径保留为明确的旧配置选项；不能把旧缓存作为新协议证据。
+本次未更改 uv.lock、模型、折数、种子、batch size 或协议总批准开关。
+先进行服务器 CPU 回归和真实重采样/筛选审计，再进入其余预处理协议与缓存验收。

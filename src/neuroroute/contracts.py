@@ -122,7 +122,7 @@ def validate_config(c):
             )
         else:
             require(p["filter_order"] is None, "FIR uses automatic length, not IIR order")
-    require(p["resample"] in ("fft", "polyphase"), "Select resampling method")
+    require(p["resample"] in ("fft", "polyphase", "mne_fft_auto"), "Select resampling method")
     number(p["uv_divisor"], "uv_divisor", strict_low=True)
     require(p["normalization"] in ("none", "train_channel_zscore"), "Select normalization")
     require(

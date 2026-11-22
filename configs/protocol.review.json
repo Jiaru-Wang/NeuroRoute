@@ -70,7 +70,7 @@
     "filter_order": null,
     "low_hz": 0.3,
     "high_hz": 40.0,
-    "resample": "fft",
+    "resample": "mne_fft_auto",
     "uv_divisor": 1.0,
     "normalization": "train_channel_zscore",
     "gdf_eeg_names": null,

@@ -229,6 +229,56 @@ def continuous_fir(signal_uv, run_starts, low_hz, high_hz):
     }
 
 
+def mark_artifact_selection(rows, policy):
+    """Record selection without renumbering trials or inventing artifact flags."""
+    require(policy in ("drop", "keep"), "Unknown artifact policy")
+    result = []
+    for row in rows:
+        require(type(row["artifact"]) is bool, "Boolean official artifact flag required")
+        excluded = policy == "drop" and row["artifact"]
+        result.append(
+            {
+                **row,
+                "selected": not excluded,
+                "exclusion_reason": "official_1023" if excluded else None,
+            }
+        )
+    return result
+
+
+def resample_window(window, method):
+    """Resample exactly one four-second 22-EEG window; no fitted statistics."""
+    from scipy.signal import resample, resample_poly
+
+    window = np.asarray(window, dtype=np.float64)
+    require(window.shape == (22, 1000), "Expected [22,1000] before resampling")
+    require(np.isfinite(window).all(), "Nonfinite resampling input")
+    if method == "mne_fft_auto":
+        from mne.filter import resample as mne_resample
+
+        # Match MNE 1.13.2 Epochs.resample defaults, not filter.resample's pad='auto'.
+        result = mne_resample(
+            window,
+            up=200,
+            down=250,
+            axis=-1,
+            method="fft",
+            npad="auto",
+            window="auto",
+            pad="edge",
+            n_jobs=1,
+            verbose="WARNING",
+        )
+    elif method == "fft":
+        result = resample(window, 800, axis=-1)
+    elif method == "polyphase":
+        result = resample_poly(window, 4, 5, axis=-1)
+    else:
+        raise ValueError("Unknown resampling method")
+    require(result.shape == (22, 800) and np.isfinite(result).all(), "Invalid resampled window")
+    return result
+
+
 def prepare(raw_dir, labels_dir, output, config, *, source_commit):
     """Approved original-reference candidate; never claims official MAT parity.
 
@@ -237,7 +287,7 @@ def prepare(raw_dir, labels_dir, output, config, *, source_commit):
     """
     import mne
     from scipy.io import loadmat
-    from scipy.signal import butter, resample, resample_poly, sosfilt
+    from scipy.signal import butter, sosfilt
 
     output = Path(output)
     output.mkdir(parents=True, exist_ok=False)
@@ -281,6 +331,7 @@ def prepare(raw_dir, labels_dir, output, config, *, source_commit):
                 )
                 events[:, 0] -= raw.first_samp
                 audit = audit_trials(events, labels, kind, raw.n_times, session)
+                audit = mark_artifact_selection(audit, p["artifact_policy"])
                 # MNE EEG is SI volts; explicit conversion to microvolts precedes approved divisor.
                 signal_uv = raw.get_data(picks=picks) * 1e6
                 filter_audit = None
@@ -301,7 +352,6 @@ def prepare(raw_dir, labels_dir, output, config, *, source_commit):
                     i = row["trial_id"] - 1
                     start, end, cue = row["start_sample"], row["end_sample"], row["cue_sample"]
                     flagged = row["artifact"]
-                    row["selected"] = not (flagged and p["artifact_policy"] == "drop")
                     if not row["selected"]:
                         continue
                     segment = signal_uv[:, int(start) : end]
@@ -319,11 +369,7 @@ def prepare(raw_dir, labels_dir, output, config, *, source_commit):
                         )
                         segment = sosfilt(sos, segment, axis=-1)
                     window = segment[:, cue - int(start) : cue - int(start) + 1000]
-                    window = (
-                        resample(window, 800, axis=-1)
-                        if p["resample"] == "fft"
-                        else resample_poly(window, 4, 5, axis=-1)
-                    )
+                    window = resample_window(window, p["resample"])
                     x = (window / p["uv_divisor"]).reshape(22, 4, 200).astype(np.float32)
                     require(np.isfinite(x).all(), "Nonfinite processed trial")
                     trials.append(x)
