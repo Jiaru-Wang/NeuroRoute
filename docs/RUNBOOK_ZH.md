@@ -162,3 +162,20 @@ uv run --locked neuroroute evaluate --config configs/local.approved.json --cache
 每步回传：执行命令、完整终端输出、对应JSON报告/错误日志、Git commit。不要发送账号密码、Token或私钥。大量结果按本地文件传回，不自动上传原始EEG到GitHub。
 
 错误时只修当前失败路径，新增回归测试、提交新commit，明确哪些旧结果作废和需要重跑。修复后依次重新验收；不把输出变成“OK”就算科学正确，也不依据保留测试反复试到好结果。
+
+## 2026-11-22 更新：独立的数据准备批准
+
+数据协议已批准但完整研究协议尚待统计审查时，使用版本化
+`configs/data.approved.json` 调用现有 `prepare` 命令。该配置采用
+`neuroroute_data_v1` / `approval_scope=data_preparation`，只允许数据缓存，
+不适用于 train/smoke/evaluate/plan 等完整协议入口；不能改其schema绕过门控。
+完整 `protocol.review.json` 仍为 approved=false。
+
+`prepare` 在创建输出目录前验证数据批准与预处理参数，在manifest中保存
+preparation_config及其SHA-256。实际处理、筛选、滤波、重采样及归一化策略未改变；
+缓存仍不拟合折内统计。输出目录必须不存在，失败产物保留，下次使用新目录。
+独立配置的preprocessing与后续完整配置须完全一致，否则缓存加载拒绝。
+
+新增入口的服务器回归通过后，助手再提供实际缓存命令。
+此前GPU报告保留在原提交；本次影响审批/缓存来源记录，应重跑CPU门控和真实缓存验收。
+后续正式训练前按最终代码版本重新生成GPU验收报告，不手改旧报告的source_commit。

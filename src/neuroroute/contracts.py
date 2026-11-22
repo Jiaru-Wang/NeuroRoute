@@ -87,23 +87,9 @@ def number(value, name, low=0, high=None, strict_low=False):
     require(high is None or value <= high, f"{name}: out of range")
 
 
-def validate_config(c):
-    """Validate approved choices; no automatic completion of null fields."""
-    require(c.get("schema") == "neuroroute_v1", "Unsupported schema")
-    require(
-        c.get("approved") is True and bool(c.get("approval_note")),
-        "Protocol is not approved; resolve docs/PROTOCOL_DECISIONS.md",
-    )
-    require(
-        c["split"] == "deterministic_7_1_1",
-        "This implementation supports the PDF 7/1/1 candidate only; nested CV requires a separate reviewed protocol",
-    )
-    require(
-        c["device"] == "cuda" and c["precision"] == "float32",
-        "GPU float32 required; no CPU fallback",
-    )
+def validate_preprocessing(c):
+    """Shared numeric/channel checks; this alone grants no approval."""
     require(c["channel_order"] == CHANNELS, "Channel order changed")
-    regions_checked(c["regions"])
     p = c["preprocessing"]
     require(p["artifact_policy"] in ("drop", "keep"), "Select artifact policy")
     require(
@@ -136,6 +122,40 @@ def validate_config(c):
         and not set(p["gdf_eog_names"]) & set(p["gdf_eeg_names"]),
         "Supply three separate EOG names",
     )
+
+
+def validate_prepare_config(c):
+    """Accept data-only approval for cache creation, never for training."""
+    if c.get("schema") == "neuroroute_v1":
+        return validate_config(c)
+    require(c.get("schema") == "neuroroute_data_v1", "Unsupported data schema")
+    require(c.get("approval_scope") == "data_preparation", "Data approval scope required")
+    require(
+        c.get("approved") is True and bool(c.get("approval_note")),
+        "Data preparation is not approved",
+    )
+    validate_preprocessing(c)
+    return c
+
+
+def validate_config(c):
+    """Validate approved choices; no automatic completion of null fields."""
+    require(c.get("schema") == "neuroroute_v1", "Unsupported schema")
+    require(
+        c.get("approved") is True and bool(c.get("approval_note")),
+        "Protocol is not approved; resolve docs/PROTOCOL_DECISIONS.md",
+    )
+    require(
+        c["split"] == "deterministic_7_1_1",
+        "This implementation supports the PDF 7/1/1 candidate only; nested CV requires a separate reviewed protocol",
+    )
+    require(
+        c["device"] == "cuda" and c["precision"] == "float32",
+        "GPU float32 required; no CPU fallback",
+    )
+    require(c["channel_order"] == CHANNELS, "Channel order changed")
+    regions_checked(c["regions"])
+    validate_preprocessing(c)
     a = c["augmentation"]
     require(
         a["selection"] in ("uniform_legal_sets", "pdf_four_branch"),

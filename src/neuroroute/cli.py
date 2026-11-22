@@ -12,7 +12,15 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-from .contracts import digest, read_json, repo_state, require, validate_config, write_json
+from .contracts import (
+    digest,
+    read_json,
+    repo_state,
+    require,
+    validate_config,
+    validate_prepare_config,
+    write_json,
+)
 
 
 def project_root():
@@ -222,7 +230,10 @@ def main():
     p.add_argument("--run", required=True, type=Path)
     p.add_argument("--output", required=True, type=Path)
     args = parser.parse_args()
-    config = validate_config(read_json(args.config)) if hasattr(args, "config") else None
+    config = None
+    if hasattr(args, "config"):
+        validator = validate_prepare_config if args.command == "prepare" else validate_config
+        config = validator(read_json(args.config))
     if args.command == "doctor":
         result = doctor()
     elif args.command == "inspect-gdf":

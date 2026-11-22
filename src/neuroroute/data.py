@@ -12,7 +12,16 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 
-from .contracts import CHANNELS, canonical_hash, digest, partition, read_json, require, write_json
+from .contracts import (
+    CHANNELS,
+    canonical_hash,
+    digest,
+    partition,
+    read_json,
+    require,
+    validate_prepare_config,
+    write_json,
+)
 
 
 def inspect_gdf(path):
@@ -289,6 +298,7 @@ def prepare(raw_dir, labels_dir, output, config, *, source_commit):
     from scipy.io import loadmat
     from scipy.signal import butter, sosfilt
 
+    validate_prepare_config(config)
     output = Path(output)
     output.mkdir(parents=True, exist_ok=False)
     p = config["preprocessing"]
@@ -296,6 +306,8 @@ def prepare(raw_dir, labels_dir, output, config, *, source_commit):
         "schema": "neuroroute_cache_v1",
         "channel_order": CHANNELS,
         "source_commit": source_commit,
+        "preparation_config": config,
+        "preparation_config_sha256": canonical_hash(config),
         "preprocessing": p,
         "preprocessing_sha256": canonical_hash(p),
         "dependencies": {n: importlib.metadata.version(n) for n in ("numpy", "scipy", "mne")},

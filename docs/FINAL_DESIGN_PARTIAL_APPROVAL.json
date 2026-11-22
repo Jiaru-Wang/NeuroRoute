@@ -1,0 +1,101 @@
+{
+  "date": "2026-11-22",
+  "whole_protocol_approved": false,
+  "ordinary_moe": {
+    "fusion": "residual_weighted_sum",
+    "candidate_experts": 8,
+    "top_k": 3
+  },
+  "final_conditions": {
+    "complete": [],
+    "C3_only": [
+      "C3"
+    ],
+    "C4_only": [
+      "C4"
+    ],
+    "C3_C4": [
+      "C3",
+      "C4"
+    ],
+    "FC3_FC4": [
+      "FC3",
+      "FC4"
+    ],
+    "CP3_CP4": [
+      "CP3",
+      "CP4"
+    ]
+  },
+  "mechanisms": {
+    "interventions": [
+      "fixed_uniform",
+      "uniform_selected",
+      "reverse_selected_weights",
+      "cyclic_expert_ids",
+      "remove_shared",
+      "donor_route",
+      "donor_rank_weights"
+    ],
+    "donor_condition": "complete",
+    "expert_id_offset": 1,
+    "fixed_expert_ids": {
+      "vanilla_moe": [
+        0,
+        1,
+        2
+      ],
+      "mask_moe": [
+        0,
+        1,
+        2
+      ],
+      "shared_h": [
+        0,
+        1
+      ],
+      "shared_hm": [
+        0,
+        1
+      ],
+      "spatial_egs": [
+        0,
+        1
+      ]
+    }
+  },
+  "mechanisms_approved": true,
+  "ablations_approved": true,
+  "ablation_grid": {
+    "random_region_seeds": [
+      101,
+      202,
+      303
+    ],
+    "shared_k": [
+      1,
+      2,
+      3
+    ],
+    "balance_lambda": [
+      0.0,
+      0.001,
+      0.01
+    ],
+    "eta": [
+      0.25,
+      0.5,
+      0.75
+    ]
+  },
+  "main_training_jobs": 216,
+  "additional_training_jobs": 243,
+  "total_training_jobs": 459,
+  "ablation_design": "Spatial-EGS单因素变化，主配置复用；每配置9折×3种子",
+  "statistics_plan_approved": false,
+  "outer_test_execution_authorized": false,
+  "evidence": [
+    "logs/protocol/fusion-final-conditions-8rcgepht/decision.json",
+    "logs/protocol/mechanisms-ablations-gkevk9dr/decision.json"
+  ]
+}
