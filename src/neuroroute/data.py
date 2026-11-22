@@ -89,6 +89,76 @@ def check_fir_physical_range(signal_uv, lower_uv, upper_uv):
         )
 
 
+def decode_gdf_gaps(signal_uv, header, picks, run_starts, trials):
+    """Audited IV-2a encoding only: -32768 gaps vs retained -2048 ADC endpoints.
+
+    Replace verified gap cells with NaN in a copy, preserving every sample index.
+    Unknown encodings fail; endpoints are logged, not certified artifact-free.
+    """
+    signal_uv = np.asarray(signal_uv, dtype=np.float64)
+    require(signal_uv.ndim == 2 and signal_uv.shape[0] == 22, "Expected 22 EEG channels")
+    require(np.isfinite(signal_uv).all(), "Unexpected nonfinite GDF decoding; inspect source")
+
+    def field(name):
+        value = np.asarray(header[name])[picks]
+        require(value.shape == (22,) and np.isfinite(value).all(), f"Invalid GDF {name}")
+        return value[:, None]
+
+    units, cal, offsets = field("units"), field("cal"), field("offsets")
+    require(np.all(units == 1e-6) and np.all(cal > 0), "Unexpected GDF scaling")
+    require(
+        np.all(field("digital_min") == -2047) and np.all(field("digital_max") == 2047),
+        "Unreviewed GDF digital range",
+    )
+    decoded = (signal_uv / (units * 1e6) - offsets) / cal
+    require(np.max(np.abs(decoded - np.rint(decoded))) < 1e-6, "Noninteger GDF reconstruction")
+    require(np.all(np.abs(decoded) <= 32768), "Unexpected digital magnitude")
+    codes = np.rint(decoded).astype(np.int64)
+    require(
+        np.all(((codes >= -2048) & (codes <= 2047)) | (codes == -32768)),
+        "Unknown GDF out-of-range encoding",
+    )
+    starts = np.asarray(run_starts)
+    require(
+        starts.ndim == 1 and starts.size > 0 and np.issubdtype(starts.dtype, np.integer),
+        "Integer run starts required",
+    )
+    require(starts[0] == 0 and np.all(np.diff(starts) > 0), "Unexpected run order")
+    require(starts[-1] < signal_uv.shape[1], "Run outside recording")
+    expected = np.zeros(signal_uv.shape[1], dtype=bool)
+    intervals = []
+    for start in starts[1:]:
+        left, right = int(start), int(start) + 100
+        require(right <= signal_uv.shape[1] and not expected[left:right].any(), "Invalid gap span")
+        expected[left:right] = True
+        intervals.append([left, right])
+    sentinel = codes == -32768
+    require(np.all(sentinel == expected[None, :]), "Gap encoding/location/length mismatch")
+    endpoints = codes == -2048
+    per_trial = []
+    for row in trials:
+        left, cue = int(row["start_sample"]), int(row["cue_sample"])
+        right = cue + 1000
+        require(0 <= left <= cue < right <= signal_uv.shape[1], "Invalid trial span")
+        require(not expected[left:right].any(), f"Trial {row['trial_id']} intersects GDF gap")
+        per_trial.append(
+            {
+                "trial_id": int(row["trial_id"]),
+                "lower_endpoint_channel_samples": int(endpoints[:, cue:right].sum()),
+            }
+        )
+    result = signal_uv.copy()
+    result[:, expected] = np.nan
+    return result, {
+        "encoding": "bciciv2a_int16_gap_minus32768_endpoint_minus2048_v1",
+        "gap_intervals": intervals,
+        "gap_time_samples": int(expected.sum()),
+        "gap_channel_samples": int(sentinel.sum()),
+        "lower_endpoint_channel_samples": int(endpoints.sum()),
+        "trial_endpoint_counts": per_trial,
+    }
+
+
 def continuous_fir(signal_uv, run_starts, low_hz, high_hz):
     """Offline 250-Hz FIR within finite run segments; never cross acquisition gaps.
 
@@ -215,16 +285,17 @@ def prepare(raw_dir, labels_dir, output, config, *, source_commit):
                 signal_uv = raw.get_data(picks=picks) * 1e6
                 filter_audit = None
                 if p["filter"] == "continuous_fir_zero":
-                    header = raw._raw_extras[0]
-                    gains = np.asarray(header["units"])[picks] * 1e6
-                    check_fir_physical_range(
+                    signal_uv, encoding_audit = decode_gdf_gaps(
                         signal_uv,
-                        np.asarray(header["physical_min"])[picks] * gains,
-                        np.asarray(header["physical_max"])[picks] * gains,
+                        raw._raw_extras[0],
+                        picks,
+                        events[events[:, 2] == 32766, 0],
+                        audit,
                     )
                     signal_uv, filter_audit = continuous_fir(
                         signal_uv, events[events[:, 2] == 32766, 0], p["low_hz"], p["high_hz"]
                     )
+                    filter_audit["gdf_encoding"] = encoding_audit
                 trials, ids, ys, flags = [], [], [], []
                 for row in audit:
                     i = row["trial_id"] - 1
