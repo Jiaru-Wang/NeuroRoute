@@ -1,0 +1,118 @@
+{
+  "schema": "neuroroute_partial_approval_v1",
+  "date": "2026-11-22",
+  "whole_protocol_approved": false,
+  "source_config_commit": "b127778d9e5133eaadc4de932b5959261f225d1b",
+  "authorization": {
+    "augmentation": "所有者授权助手决定；助手选择pdf_four_branch，不声称最优",
+    "regions": "所有者明确确认四组成员及保持组大小重新训练的随机区域对照原则",
+    "development": "所有者明确确认开发选择指标、早停及共同预算"
+  },
+  "approved_config_sections": {
+    "augmentation": {
+      "selection": "pdf_four_branch",
+      "branch_probabilities": [
+        0.25,
+        0.25,
+        0.25,
+        0.25
+      ],
+      "other_count_probabilities": [
+        0.5,
+        0.5
+      ]
+    },
+    "regions": {
+      "front": [
+        "Fz",
+        "FC3",
+        "FC1",
+        "FCz",
+        "FC2",
+        "FC4"
+      ],
+      "left": [
+        "C5",
+        "C3",
+        "C1",
+        "CP3",
+        "CP1",
+        "P1"
+      ],
+      "mid": [
+        "Cz",
+        "CPz",
+        "Pz",
+        "POz"
+      ],
+      "right": [
+        "C2",
+        "C4",
+        "C6",
+        "CP2",
+        "CP4",
+        "P2"
+      ]
+    },
+    "selection": {
+      "metric": "mean_condition_macro_f1",
+      "conditions": {
+        "complete": [],
+        "C3_only": [
+          "C3"
+        ],
+        "C4_only": [
+          "C4"
+        ]
+      }
+    },
+    "training": {
+      "batch_size": 16,
+      "max_epochs": 50,
+      "patience": 10,
+      "min_delta": 0.0,
+      "optimizer": "AdamW",
+      "lr": 0.0003,
+      "weight_decay": 0.01,
+      "balance_lambda": 0.01
+    },
+    "seeds": [
+      42,
+      123,
+      3407
+    ]
+  },
+  "additional_rules": {
+    "views_per_trial_per_epoch": 1,
+    "view_id": 0,
+    "B0_complete_only": true,
+    "other_pool_excludes": [
+      "C3",
+      "C4"
+    ],
+    "drop_last": false,
+    "earliest_checkpoint_on_tie": true,
+    "new_hyperparameter_search": false,
+    "random_regions_preserve_sizes": [
+      6,
+      6,
+      4,
+      6
+    ],
+    "random_regions_require_retraining": true,
+    "random_region_seeds": null,
+    "random_region_repetitions": null
+  },
+  "pending": [
+    "ordinary_moe_fusion",
+    "final_test_extra_conditions",
+    "mechanism_plan",
+    "ablation_grid_and_budget",
+    "random_region_repetitions",
+    "primary_statistical_comparisons_and_plan"
+  ],
+  "server_decision_records": [
+    "logs/protocol/augmentation-0pi_lryt/decision.json",
+    "logs/protocol/regions-laatbgza/decision.json"
+  ]
+}

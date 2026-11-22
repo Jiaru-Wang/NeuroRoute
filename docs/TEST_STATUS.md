@@ -1,5 +1,14 @@
 # 实际验证状态（分版本记录）
 
+## 最新服务器回传证据
+
+用户回传b127778：49项单元及合成集成测试通过，无失败、错误或跳过，
+包含7项GPUModelTests，其余包含CPU测试。报告gpu-unit-7riZFxY6。
+真实官方checkpoint哈希0792cb808c14e6b7a2bb2ce1dff379bc47bc54c49a779825bdfeb33bf8157178，
+严格加载及完整/C3/C4/C3+C4合成GPU输出、冻结与反事实检查通过，
+报告official-backbone-0ka_lwgj。不是正式真实EEG训练或性能结果。
+本次开发协议汇总仅新增/更新文档，未重跑或冒称新提交GPU验收。
+
 ## 数据协议批准与九折隔离回归
 
 2026-11-22 所有者确认四项数据协议，见 DATA_PROTOCOL_APPROVAL.md。

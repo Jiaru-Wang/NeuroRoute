@@ -12,6 +12,13 @@
 D03 由此确定。随后所有者确认原始参考、μV不额外缩放、训练折逐通道z-score及确定性7/1/1；D01与D02这些选择见 [DATA_PROTOCOL_APPROVAL.md](DATA_PROTOCOL_APPROVAL.md)。整份协议仍未冻结。
 本文件不要求初学者立即回答所有细节；开发者应按模块给出证据、明确建议与取舍，每次只确认当前必要的事项。
 
+## 最新局部批准状态
+
+D04增强、D05几何成员及随机对照原则、D06开发选择、D07共同训练预算已逐项批准，
+见 [DEVELOPMENT_PROTOCOL_APPROVAL.md](DEVELOPMENT_PROTOCOL_APPROVAL.md) 及其JSON精确快照。
+下表保留决策清单与原始依据；已批准项目以上述记录为准。D05随机分组重复数仍待定，
+D08、D09及机制/消融计划仍待审，整份配置保持未批准。
+
 ## 已明确的约束
 
 - 目标账户 Jiaru-Wang，私有 NeuroRoute 仓库；SSH 已实际认证。
