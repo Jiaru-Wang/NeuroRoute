@@ -179,3 +179,11 @@ preparation_config及其SHA-256。实际处理、筛选、滤波、重采样及�
 新增入口的服务器回归通过后，助手再提供实际缓存命令。
 此前GPU报告保留在原提交；本次影响审批/缓存来源记录，应重跑CPU门控和真实缓存验收。
 后续正式训练前按最终代码版本重新生成GPU验收报告，不手改旧报告的source_commit。
+
+## 正式配置更新
+
+所有者现已逐项批准主协议，正式入口使用configs/protocol.approved.json，
+消融用configs/ablations.approved.json，主比较统计用configs/statistics.approved.json。
+不要把review模板改为true。批准依据与待完成事项见EXECUTION_PROTOCOL_APPROVAL.md。
+先更新服务器并回归，再按助手命令生成计划（不启动训练）、刷新GPU资源并重跑
+当前版本GPU套件，随后进行真实缓存+官方权重的smoke。外层测试仍需锁定授权。

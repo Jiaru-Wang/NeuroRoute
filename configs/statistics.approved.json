@@ -1,0 +1,37 @@
+{
+  "approved": true,
+  "approval_note": "所有者逐项确认及授权助手决定，见 docs/EXECUTION_PROTOCOL_APPROVAL.md；外层测试另需锁定授权。",
+  "test": "exact_paired_sign_flip",
+  "metric": "macro_f1",
+  "condition": "C3_C4",
+  "bootstrap_replicates": 10000,
+  "confidence": 0.95,
+  "seed": 42,
+  "comparisons": [
+    [
+      "B0",
+      "B1"
+    ],
+    [
+      "B1",
+      "spatial_egs"
+    ],
+    [
+      "matched_mlp",
+      "spatial_egs"
+    ],
+    [
+      "mask_moe",
+      "spatial_egs"
+    ],
+    [
+      "shared_h",
+      "shared_hm"
+    ],
+    [
+      "shared_hm",
+      "spatial_egs"
+    ]
+  ],
+  "notice": "已批准范围见docs/EXECUTION_PROTOCOL_APPROVAL.md；计划生成不等于实验执行。"
+}

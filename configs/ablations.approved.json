@@ -1,0 +1,25 @@
+{
+  "approved": true,
+  "approval_note": "所有者逐项确认及授权助手决定，见 docs/EXECUTION_PROTOCOL_APPROVAL.md；外层测试另需锁定授权。",
+  "notice": "已批准范围见docs/EXECUTION_PROTOCOL_APPROVAL.md；计划生成不等于实验执行。",
+  "random_region_seeds": [
+    101,
+    202,
+    303
+  ],
+  "shared_k": [
+    1,
+    2,
+    3
+  ],
+  "balance_lambda": [
+    0.0,
+    0.001,
+    0.01
+  ],
+  "eta": [
+    0.25,
+    0.5,
+    0.75
+  ]
+}

@@ -45,6 +45,7 @@ def generate_ablations(config, plan, output):
     output = Path(output)
     output.mkdir(parents=True, exist_ok=False)
     jobs = []
+    reused = []
     for axis, values in (
         ("random_region_seed", plan["random_region_seeds"]),
         ("shared_k", plan["shared_k"]),
@@ -53,7 +54,18 @@ def generate_ablations(config, plan, output):
     ):
         require(len(values) == len(set(values)), "Duplicate ablation value")
         for index, value in enumerate(values):
+            if axis != "random_region_seed":
+                section = "training" if axis == "balance_lambda" else "model"
+                if value == config[section][axis]:
+                    reused.append(
+                        {"axis": axis, "value": value, "base_config_sha256": canonical_hash(config)}
+                    )
+                    continue
             candidate = deepcopy(config)
+            # Approved interventions apply to main models only, not retrained ablations.
+            candidate["final_test"]["mechanisms"]["approved"] = False
+            candidate["final_test"]["mechanisms"]["approval_note"] = ""
+
             if axis == "random_region_seed":
                 require(type(value) is int and value >= 0, "Invalid region seed")
                 shuffled = list(CHANNELS)
@@ -91,6 +103,8 @@ def generate_ablations(config, plan, output):
         {
             "scope": "planned_not_executed",
             "jobs": jobs,
+            "reused_main_config": reused,
+            "additional_training_jobs": len(jobs) * 9 * len(config["seeds"]),
             "structural_ablations": "shared_h, shared_hm, mask_moe and vanilla_moe are in the main comparison plan",
         },
     )

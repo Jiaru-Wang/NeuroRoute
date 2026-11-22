@@ -222,8 +222,12 @@ def paired_subject_statistics(paths, plan, output):
                 "reference_subject_means": values[reference].tolist(),
                 "candidate_subject_means": values[candidate].tolist(),
                 "mean_difference": observed,
+                "mean_difference_percentage_points": observed * 100,
                 "paired_cohen_dz": observed / sd if sd > 0 else None,
                 "percentile_bootstrap_ci": np.quantile(boot, [alpha, 1 - alpha]).tolist(),
+                "percentile_bootstrap_ci_percentage_points": (
+                    np.quantile(boot, [alpha, 1 - alpha]) * 100
+                ).tolist(),
                 "p_exact": pvalue,
                 "wins": int((difference > 0).sum()),
                 "ties": int((difference == 0).sum()),
