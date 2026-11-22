@@ -22,8 +22,8 @@ def inspect_gdf(path):
         return {
             "channels": raw.ch_names,
             "types": raw.get_channel_types(),
-            "sfreq": raw.info["sfreq"],
-            "samples": raw.n_times,
+            "sfreq": float(raw.info["sfreq"]),
+            "samples": int(raw.n_times),
             "annotation_descriptions": sorted(set(raw.annotations.description.tolist())),
         }
 
@@ -38,7 +38,7 @@ def audit_trials(events, labels, kind, n_times, session):
     )
     audit = []
     for i, start in enumerate(starts):
-        next_start = int(starts[i + 1]) if i + 1 < len(starts) else n_times
+        next_start = int(starts[i + 1]) if i + 1 < len(starts) else int(n_times)
         boundaries = events[
             (events[:, 2] == 32766) & (events[:, 0] > start) & (events[:, 0] < next_start), 0
         ]
