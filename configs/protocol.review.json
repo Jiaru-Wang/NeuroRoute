@@ -2,7 +2,7 @@
   "schema": "neuroroute_v1",
   "approved": false,
   "approval_note": "",
-  "review_notice": "候选方案供所有者审查；不是已确定的论文协议，不可直接启动训练。GDF实际通道名必须检查后填写。",
+  "review_notice": "数据协议已局部批准，见 docs/DATA_PROTOCOL_APPROVAL.md；其余科研选择待审，整份协议仍不可启动训练。",
   "split": "deterministic_7_1_1",
   "device": "cuda",
   "precision": "float32",
@@ -73,8 +73,35 @@
     "resample": "mne_fft_auto",
     "uv_divisor": 1.0,
     "normalization": "train_channel_zscore",
-    "gdf_eeg_names": null,
-    "gdf_eog_names": null
+    "gdf_eeg_names": [
+      "EEG-Fz",
+      "EEG-0",
+      "EEG-1",
+      "EEG-2",
+      "EEG-3",
+      "EEG-4",
+      "EEG-5",
+      "EEG-C3",
+      "EEG-6",
+      "EEG-Cz",
+      "EEG-7",
+      "EEG-C4",
+      "EEG-8",
+      "EEG-9",
+      "EEG-10",
+      "EEG-11",
+      "EEG-12",
+      "EEG-13",
+      "EEG-14",
+      "EEG-Pz",
+      "EEG-15",
+      "EEG-16"
+    ],
+    "gdf_eog_names": [
+      "EOG-left",
+      "EOG-central",
+      "EOG-right"
+    ]
   },
   "augmentation": {
     "selection": "pdf_four_branch",
