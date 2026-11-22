@@ -66,8 +66,8 @@
   "preprocessing": {
     "artifact_policy": "drop",
     "reference": "original",
-    "filter": "trial_butter_causal",
-    "filter_order": 5,
+    "filter": "continuous_fir_zero",
+    "filter_order": null,
     "low_hz": 0.3,
     "high_hz": 40.0,
     "resample": "fft",

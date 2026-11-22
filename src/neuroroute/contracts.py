@@ -110,10 +110,18 @@ def validate_config(c):
         p["reference"] == "original",
         "Only original acquisition reference supported; cross-channel rereferencing requires separate missingness audit",
     )
-    require(p["filter"] in ("none", "trial_butter_causal"), "Select supported filter explicitly")
+    require(
+        p["filter"] in ("none", "trial_butter_causal", "continuous_fir_zero"),
+        "Select supported filter explicitly",
+    )
     if p["filter"] != "none":
-        require(type(p["filter_order"]) is int and p["filter_order"] > 0, "Invalid filter order")
         require(0 < p["low_hz"] < p["high_hz"] < 125, "Invalid filter frequencies")
+        if p["filter"] == "trial_butter_causal":
+            require(
+                type(p["filter_order"]) is int and p["filter_order"] > 0, "Invalid filter order"
+            )
+        else:
+            require(p["filter_order"] is None, "FIR uses automatic length, not IIR order")
     require(p["resample"] in ("fft", "polyphase"), "Select resampling method")
     number(p["uv_divisor"], "uv_divisor", strict_low=True)
     require(p["normalization"] in ("none", "train_channel_zscore"), "Select normalization")

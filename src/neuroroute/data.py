@@ -68,10 +68,101 @@ def audit_trials(events, labels, kind, n_times, session):
     return audit
 
 
+def check_fir_physical_range(signal_uv, lower_uv, upper_uv):
+    """Reject finite overflow/sentinel values; do not guess or silently repair gaps."""
+    lower_uv, upper_uv = np.asarray(lower_uv), np.asarray(upper_uv)
+    require(lower_uv.shape == upper_uv.shape == (signal_uv.shape[0],), "Physical range shape")
+    require(
+        np.isfinite(lower_uv).all() and np.isfinite(upper_uv).all() and np.all(lower_uv < upper_uv),
+        "Invalid physical ranges",
+    )
+    tolerance = np.maximum(np.abs(lower_uv), np.abs(upper_uv)) * 1e-10
+    invalid = np.isfinite(signal_uv) & (
+        (signal_uv < (lower_uv - tolerance)[:, None])
+        | (signal_uv > (upper_uv + tolerance)[:, None])
+    )
+    if invalid.any():
+        channel, sample = np.argwhere(invalid)[0]
+        raise ValueError(
+            f"Finite out-of-range sample before FIR: channel={channel}, sample={sample}; "
+            "inspect GDF overflow/gap encoding, do not clip or impute"
+        )
+
+
+def continuous_fir(signal_uv, run_starts, low_hz, high_hz):
+    """Offline 250-Hz FIR within finite run segments; never cross acquisition gaps.
+
+    No fitted statistics, channel mixing, trial rejection or input mutation.
+    Preserve missing samples so subsequent trial checks still reject them.
+    """
+    from mne.filter import create_filter, filter_data
+
+    signal_uv = np.asarray(signal_uv, dtype=np.float64)
+    require(signal_uv.ndim == 2 and min(signal_uv.shape) > 0, "Expected channels x samples")
+    n_times = signal_uv.shape[1]
+    starts = np.asarray(run_starts)
+    require(
+        starts.ndim == 1 and (not starts.size or np.issubdtype(starts.dtype, np.integer)),
+        "Run boundaries must be integer sample indices",
+    )
+    require(np.all((starts >= 0) & (starts < n_times)), "Run boundary outside recording")
+    require(0 < low_hz < high_hz < 125, "Invalid FIR frequencies")
+    options = dict(
+        sfreq=250,
+        l_freq=low_hz,
+        h_freq=high_hz,
+        method="fir",
+        phase="zero",
+        filter_length="auto",
+        l_trans_bandwidth="auto",
+        h_trans_bandwidth="auto",
+        fir_window="hamming",
+        fir_design="firwin",
+    )
+    taps = create_filter(None, **options, verbose="WARNING")
+    finite = np.isfinite(signal_uv).all(axis=0)
+    edges = np.flatnonzero(np.diff(np.r_[False, finite, False]))
+    segments = []
+    for left, right in zip(edges[::2], edges[1::2]):
+        boundaries = sorted({int(left), int(right)} | {int(s) for s in starts if left < s < right})
+        segments.extend(zip(boundaries[:-1], boundaries[1:]))
+    require(bool(segments), "No finite recording segments")
+    for left, right in segments:
+        require(
+            right - left >= len(taps),
+            f"FIR segment [{left},{right}) shorter than {len(taps)} taps; inspect recording",
+        )
+    filtered = signal_uv.copy()
+    for left, right in segments:
+        filtered[:, left:right] = filter_data(
+            signal_uv[:, left:right],
+            **options,
+            pad="reflect_limited",
+            n_jobs=1,
+            copy=True,
+            verbose="WARNING",
+        )
+    return filtered, {
+        "filter": "continuous_fir_zero",
+        "phase": "zero",
+        "fir_design": "firwin",
+        "fir_window": "hamming",
+        "pad": "reflect_limited",
+        "sfreq": 250,
+        "low_hz": float(low_hz),
+        "high_hz": float(high_hz),
+        "filter_length_samples": len(taps),
+        "filter_coefficients_sha256": canonical_hash(taps.tolist()),
+        "segments": [list(s) for s in segments],
+        "nonfinite_time_samples": int((~finite).sum()),
+        "run_starts": sorted(set(int(s) for s in starts)),
+    }
+
+
 def prepare(raw_dir, labels_dir, output, config, *, source_commit):
     """Approved original-reference candidate; never claims official MAT parity.
 
-    Filtering is either absent or per-trial causal Butterworth, configured explicitly.
+    Filtering is absent, per-trial causal Butterworth, or continuous segmented FIR.
     The official MAT reference applies CAR; this GDF pipeline does not mix channels.
     """
     import mne
@@ -122,6 +213,18 @@ def prepare(raw_dir, labels_dir, output, config, *, source_commit):
                 audit = audit_trials(events, labels, kind, raw.n_times, session)
                 # MNE EEG is SI volts; explicit conversion to microvolts precedes approved divisor.
                 signal_uv = raw.get_data(picks=picks) * 1e6
+                filter_audit = None
+                if p["filter"] == "continuous_fir_zero":
+                    header = raw._raw_extras[0]
+                    gains = np.asarray(header["units"])[picks] * 1e6
+                    check_fir_physical_range(
+                        signal_uv,
+                        np.asarray(header["physical_min"])[picks] * gains,
+                        np.asarray(header["physical_max"])[picks] * gains,
+                    )
+                    signal_uv, filter_audit = continuous_fir(
+                        signal_uv, events[events[:, 2] == 32766, 0], p["low_hz"], p["high_hz"]
+                    )
                 trials, ids, ys, flags = [], [], [], []
                 for row in audit:
                     i = row["trial_id"] - 1
@@ -184,6 +287,7 @@ def prepare(raw_dir, labels_dir, output, config, *, source_commit):
                     "count": len(ids),
                     "trial_ids": ids,
                     "class_counts": np.bincount(ys, minlength=4).tolist(),
+                    "filter_audit": filter_audit,
                 }
             )
     write_json(output / "manifest.json", manifest)
